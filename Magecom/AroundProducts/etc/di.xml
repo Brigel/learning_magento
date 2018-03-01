@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper" type="Magecom\AroundProducts\Controller\Adminhtml\Product\Initialization\Helper" />
+    <preference for="Magento\Catalog\Model\Product\Link" type="Magecom\AroundProducts\Model\Product\Link" />
+    <preference for="Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\Related" type="Magecom\AroundProducts\Ui\DataProvider\Product\Form\Modifier\Around" />
+    <preference for="Magento\Catalog\Block\Adminhtml\Product\Edit\Tabs" type="Magecom\AroundProducts\Block\Adminhtml\Product\Edit\Tabs" />
+
+
+    <type name="Magento\Catalog\Model\Product">
+        <arguments>
+            <argument name="productLink" xsi:type="object">Magecom\AroundProducts\Model\Product\Link\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Magecom\AroundProducts\Model\Product">
+        <arguments>
+            <argument name="productLink" xsi:type="object">Magecom\AroundProducts\Model\Product\Link\Proxy</argument>
+        </arguments>
+    </type>
+    <preference for="Magento\Catalog\Model\Product" type="Magecom\AroundProducts\Model\Product" />
+
+    <type name="Magento\Catalog\Model\Product\LinkTypeProvider">
+        <arguments>
+            <argument name="linkTypes" xsi:type="array">
+                <item name="around" xsi:type="const">Magecom\AroundProducts\Model\Product\Link::LINK_TYPE_AROUND</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Catalog\Model\ProductLink\CollectionProvider">
+        <arguments>
+            <argument name="providers" xsi:type="array">
+                <item name="around" xsi:type="object">Magecom\AroundProducts\Model\ProductLink\CollectionProvider\Around</item>
+            </argument>
+        </arguments>
+    </type>
+</config>
