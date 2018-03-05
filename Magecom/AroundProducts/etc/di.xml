@@ -1,34 +1,59 @@
 <?xml version="1.0"?>
+<!--
+/**
+ * Magecom
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to info@magecom.net so we can send you a copy immediately.
+ *
+ * @category  Magecom
+ * @package   Magecom_SubscriberPopUp
+ * @copyright Copyright (c) 2017 Magecom, Inc. (http://www.magecom.net)
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <preference for="Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper" type="Magecom\AroundProducts\Controller\Adminhtml\Product\Initialization\Helper" />
-    <preference for="Magento\Catalog\Model\Product\Link" type="Magecom\AroundProducts\Model\Product\Link" />
-    <preference for="Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\Related" type="Magecom\AroundProducts\Ui\DataProvider\Product\Form\Modifier\Around" />
-    <preference for="Magento\Catalog\Block\Adminhtml\Product\Edit\Tabs" type="Magecom\AroundProducts\Block\Adminhtml\Product\Edit\Tabs" />
-
-
-    <type name="Magento\Catalog\Model\Product">
+    <virtualType name="MagecomAroundProductsGridFilterPool"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\FilterPool">
         <arguments>
-            <argument name="productLink" xsi:type="object">Magecom\AroundProducts\Model\Product\Link\Proxy</argument>
+            <argument name="appliers" xsi:type="array">
+                <item name="regular" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter</item>
+                <item name="fulltext" xsi:type="object">Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MagecomAroundProductsProductsGridDataProvider"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <arguments>
+            <argument name="collection" xsi:type="object" shared="false">Magecom\AroundProducts\Model\ResourceModel\AroundProducts\Collection</argument>
+            <argument name="filterPool" xsi:type="object" shared="false">MagecomAroundProductsGridFilterPool</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magecom\AroundProducts\Model\ResourceModel\AroundProducts\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">around_products</argument>
+            <argument name="eventPrefix" xsi:type="string">magecom_around_products_grid_collection</argument>
+            <argument name="eventObject" xsi:type="string">around_products_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">Magecom\AroundProducts\Model\ResourceModel\AroundProducts</argument>
         </arguments>
     </type>
-    <type name="Magecom\AroundProducts\Model\Product">
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
-            <argument name="productLink" xsi:type="object">Magecom\AroundProducts\Model\Product\Link\Proxy</argument>
-        </arguments>
-    </type>
-    <preference for="Magento\Catalog\Model\Product" type="Magecom\AroundProducts\Model\Product" />
-
-    <type name="Magento\Catalog\Model\Product\LinkTypeProvider">
-        <arguments>
-            <argument name="linkTypes" xsi:type="array">
-                <item name="around" xsi:type="const">Magecom\AroundProducts\Model\Product\Link::LINK_TYPE_AROUND</item>
+            <argument name="collections" xsi:type="array">
+                <item name="magecom_around_products_listing_data_source" xsi:type="string">Magecom\AroundProducts\Model\ResourceModel\AroundProducts\Grid\Collection</item>
             </argument>
         </arguments>
     </type>
-    <type name="Magento\Catalog\Model\ProductLink\CollectionProvider">
+    <type name="Magento\Framework\Console\CommandList">
         <arguments>
-            <argument name="providers" xsi:type="array">
-                <item name="around" xsi:type="object">Magecom\AroundProducts\Model\ProductLink\CollectionProvider\Around</item>
+            <argument name="commands" xsi:type="array">
+                <item name="magecom_add_around_products_command" xsi:type="object">Magecom\AroundProducts\Command\CreateAroundProducts</item>
             </argument>
         </arguments>
     </type>
