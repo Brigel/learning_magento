@@ -34,28 +34,28 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class CreateAroundProducts extends Command
 {
-    protected $prodHistoryCollection;
+    protected $prodHistoryCollectionFactory;
     protected $productsSessionHistoryFactory;
     protected $resourceProdSessHistory;
 
-    protected $aroundProdsCollection;
+    protected $aroundProdsCollectionFactory;
     protected $aroundProductsFactory;
     protected $resourceAroundProducts;
 
     public function __construct(
-        \Magecom\AroundProducts\Model\ResourceModel\ProductsSessionHistory\Collection $prodHistoryCollection,
-        \Magecom\AroundProducts\Model\ResourceModel\AroundProducts\Collection $aroundProdsCollection,
+        \Magecom\AroundProducts\Model\ResourceModel\ProductsSessionHistory\CollectionFactory $prodHistoryCollectionFactory,
+        \Magecom\AroundProducts\Model\ResourceModel\AroundProducts\CollectionFactory $aroundProdsCollectionFactory,
         \Magecom\AroundProducts\Model\ProductsSessionHistoryFactory $productsSessionHistoryFactory,
         \Magecom\AroundProducts\Model\AroundProductsFactory $aroundProductsFactory,
         \Magecom\AroundProducts\Model\ResourceModel\ProductsSessionHistory $resourceProdSessHistory,
         \Magecom\AroundProducts\Model\ResourceModel\AroundProducts $resourceAroundProducts,
         $name = null
     ) {
-        $this->prodHistoryCollection = $prodHistoryCollection;
+        $this->prodHistoryCollectionFactory = $prodHistoryCollectionFactory;
         $this->productsSessionHistoryFactory = $productsSessionHistoryFactory;
         $this->resourceProdSessHistory = $resourceProdSessHistory;
 
-        $this->aroundProdsCollection = $aroundProdsCollection;
+        $this->aroundProdsCollectionFactory = $aroundProdsCollectionFactory;
         $this->aroundProductsFactory = $aroundProductsFactory;
         $this->resourceAroundProducts = $resourceAroundProducts;
 
@@ -84,40 +84,66 @@ class CreateAroundProducts extends Command
         $output->writeln("<info>Start creating...</info>");
 
         try {
-            $productHistoryIds = $this->prodHistoryCollection->getAllIds();
-            $productHistoryItems = $this->prodHistoryCollection->addFieldToFilter('id', ['in' => $productHistoryIds]);
+
+            $productHistoryCollection = $this->prodHistoryCollectionFactory->create();
+
+            $productHistoryCollection->addFieldToSelect('session_id')
+                ->addFieldToFilter(
+                    'processed',
+                    ['eq' => 0]
+                )
+                ->getSelect()
+                ->group('session_id');
+            $productHistorySessionIds = $productHistoryCollection->getItems();
+//            $productHistoryItems = $this->prodHistoryCollection->addFieldToFilter('id', ['in' => $productHistorySessionIds]);
             $aroundProductsItems = [];
+            foreach ($productHistorySessionIds as $sessionId) {
+                $sessionId = $sessionId->getData('session_id');
+                $productHistoryCollection = $this->prodHistoryCollectionFactory->create();
+                $productHistoryItems =
+                    $productHistoryCollection
+                        ->addFieldToFilter(
+                            'session_id',
+                            ['eq' => $sessionId]
+                        )->addFieldToFilter(
+                            'processed',
+                            ['eq' => 0]
+                        )->getItems();
+                if ($productHistoryItems <= 1) {
+                    continue;
+                }
+                foreach ($productHistoryItems as $item) {
+                    foreach ($productHistoryItems as $secondItem) {
+                        if (
+                            $item->getData('id') !== $secondItem->getData('id')
+                        ) {
 
-            foreach ($productHistoryItems as $item) {
-                foreach ($productHistoryItems as $secondItem) {
-                    if (
-                        $item->getData('id') !== $secondItem->getData('id')
-                        &&
-                        $item->getData('session_id') == $secondItem->getData('session_id')
-                    ) {
+                            $itemAroundProduct = $this->aroundProdsCollectionFactory->create()
+                                ->addFieldToFilter('product_id_main', ['eq' => $item->getData('product_id')])
+                                ->addFieldToFilter('product_id', ['eq' => $secondItem->getData('product_id')])
+                                ->getFirstItem();
 
-                        $count = $this->aroundProdsCollection
-                            ->addFieldToFilter('product_id_main', ['eq' => $item->getData('product_id')])
-                            ->addFieldToFilter('product_id', ['eq' => $secondItem->getData('product_id')])
-                            ->count();
-
-                        if ($count != 0) {
-                            continue;
+                            if (!$itemAroundProduct->isEmpty()) {
+                                $itemAroundProduct->setData(
+                                    'counter', ($itemAroundProduct->getData('counter') + 1)
+                                );
+                            } else {
+                                $itemAroundProduct->setData([
+                                    'product_id_main' => $item->getData('product_id'),
+                                    'product_id' => $secondItem->getData('product_id'),
+                                    'counter' => 1,
+                                ]);
+                            }
+                            $this->resourceAroundProducts->save($itemAroundProduct);
                         }
-
-                        $aroundProduct = $this->aroundProductsFactory->create();
-                        $aroundProduct->setData([
-                            'product_id_main' => $item->getData('product_id'),
-                            'product_id' => $secondItem->getData('product_id')
-                        ]);
-
-                        $this->resourceAroundProducts->save($aroundProduct);
-
                     }
                 }
-            }
-            foreach ($productHistoryItems as $item) {
-                $this->resourceProdSessHistory->delete($item);
+                foreach ($productHistoryItems as $item) {
+                    $item->addData([
+                        'processed' => 1
+                    ]);
+                    $this->resourceProdSessHistory->save($item);
+                }
             }
 
 

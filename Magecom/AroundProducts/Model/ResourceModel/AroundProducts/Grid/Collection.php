@@ -36,6 +36,8 @@ class Collection extends AroundProductsCollection implements SearchResultInterfa
     protected $aggregations;
 
     public function __construct(
+        \Magento\Eav\Model\Config $config,
+        \Magento\Eav\Model\Attribute $attribute,
         \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
@@ -43,7 +45,8 @@ class Collection extends AroundProductsCollection implements SearchResultInterfa
         \Magento\Framework\DB\Adapter\AdapterInterface $connection = null,
         \Magento\Framework\Model\ResourceModel\Db\AbstractDb $resource = null
     ) {
-        parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
+        parent::__construct($config, $attribute, $entityFactory, $logger, $fetchStrategy, $eventManager, $connection,
+            $resource);
     }
 
     /**

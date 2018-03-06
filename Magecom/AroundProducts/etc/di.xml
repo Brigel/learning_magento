@@ -57,4 +57,7 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\CatalogWidget\Block\Product\ProductsList">
+        <plugin name="add_condition_by_around_products" type="Magecom\AroundProducts\Plugin\AfterGetCollection" sortOrder="1" />
+    </type>
 </config>
