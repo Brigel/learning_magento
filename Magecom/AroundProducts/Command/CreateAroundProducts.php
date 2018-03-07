@@ -95,8 +95,6 @@ class CreateAroundProducts extends Command
                 ->getSelect()
                 ->group('session_id');
             $productHistorySessionIds = $productHistoryCollection->getItems();
-//            $productHistoryItems = $this->prodHistoryCollection->addFieldToFilter('id', ['in' => $productHistorySessionIds]);
-            $aroundProductsItems = [];
             foreach ($productHistorySessionIds as $sessionId) {
                 $sessionId = $sessionId->getData('session_id');
                 $productHistoryCollection = $this->prodHistoryCollectionFactory->create();

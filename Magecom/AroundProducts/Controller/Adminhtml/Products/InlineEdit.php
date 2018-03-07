@@ -1,28 +1,9 @@
 <?php
-/**
- * Magecom
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to info@magecom.net so we can send you a copy immediately.
- *
- * @category Magecom
- * @package Magecom_Module
- * @copyright Copyright (c) 2017 Magecom, Inc. (http://www.magecom.net)
- * @license  http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
- */
 
 namespace Magecom\AroundProducts\Controller\Adminhtml\Products;
 
 /**
  * Class InlineEdit
- * @package Magecom\Brand\Controller\Adminhtml\Brand
  */
 abstract class InlineEdit extends \Magento\Backend\App\Action
 {
@@ -79,13 +60,13 @@ abstract class InlineEdit extends \Magento\Backend\App\Action
                 $aroundProduct->addData($aroundProductData);
                 $this->_resourceAroundProducts->save($aroundProduct);
             } catch (\Magento\Framework\Exception\LocalizedException $e) {
-                $messages[] = $this->getErrorWithbrandId($aroundProduct, $e->getMessage());
+                $messages[] = $this->getErrorWithAroundProductId($aroundProduct, $e->getMessage());
                 $error = true;
             } catch (\RuntimeException $e) {
-                $messages[] = $this->getErrorWithbrandId($aroundProduct, $e->getMessage());
+                $messages[] = $this->getErrorWithAroundProductId($aroundProduct, $e->getMessage());
                 $error = true;
             } catch (\Exception $e) {
-                $messages[] = $this->getErrorWithbrandId(
+                $messages[] = $this->getErrorWithAroundProductId(
                     $aroundProduct,
                     __('Something went wrong while saving the Item.')
                 );
@@ -98,7 +79,7 @@ abstract class InlineEdit extends \Magento\Backend\App\Action
         ]);
     }
 
-    protected function getErrorWithbrandId(\Magecom\AroundProducts\Model\AroundProducts $aroundProduct, $errorText)
+    protected function getErrorWithAroundProductId(\Magecom\AroundProducts\Model\AroundProducts $aroundProduct, $errorText)
     {
         return '[Item ID: ' . $aroundProduct->getId() . '] ' . $errorText;
     }

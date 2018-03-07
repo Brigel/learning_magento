@@ -29,7 +29,6 @@ use Magento\Framework\Api\SearchCriteriaInterface;
 
 /**
  * Class Collection
- * @package Magecom\Brand\Model\ResourceModel\Brand\Grid
  */
 class Collection extends AroundProductsCollection implements SearchResultInterface
 {

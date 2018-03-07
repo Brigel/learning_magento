@@ -29,7 +29,7 @@ class AfterGetCollection
         }
         $product = $this->registry->registry('product');
 
-        if (!isset($product) || empty($product) && !$product->getId()) {
+        if (!isset($product) || empty($product) || !$product->getId()) {
             return $collection;
         }
 

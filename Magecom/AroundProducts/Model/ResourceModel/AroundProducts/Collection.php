@@ -1,4 +1,5 @@
 <?php
+
 namespace Magecom\AroundProducts\Model\ResourceModel\AroundProducts;
 
 class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
@@ -7,6 +8,8 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
     protected $_eventPrefix = 'magecom_around_products';
     protected $_eventObject = 'around_products_collection';
     protected $_aliasIndex = 1;
+    protected $_eavAttr;
+    protected $_eavConfig;
 
     public function __construct(
         \Magento\Eav\Model\Config $config,
@@ -19,40 +22,70 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
         \Magento\Framework\Model\ResourceModel\Db\AbstractDb $resource = null
     ) {
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
-        $this->eavConfig = $config;
-        $this->eavAttr = $attribute;
-        $buff = $this->joinEAV($this,'product_id_main','catalog_product','name', 'main_product_name');
-        $this->addFilterToMap('main_product_name', $buff['table'].'.'.$buff['field']);
-        $buff = $this->joinEAV($this,'product_id','catalog_product','name', 'product_name');
-        $this->addFilterToMap('product_name', $buff['table'].'.'.$buff['field']);
-        $buff = $this->joinEAV($this,'product_id_main','catalog_product','sku', 'main_product_sku');
-        $this->addFilterToMap('main_product_sku', $buff['table'].'.'.$buff['field']);
-        $buff = $this->joinEAV($this,'product_id','catalog_product','sku', 'product_sku');
-        $this->addFilterToMap('product_sku', $buff['table'].'.'.$buff['field']);
+        $this->_eavConfig = $config;
+        $this->_eavAttr = $attribute;
+        $attributes = [
+            [
+                'main_table_foreign_key' => 'product_id_main',
+                'eav_type' => 'catalog_product',
+                'attr_code' => 'name',
+                'field_alias' => 'main_product_name'
+            ],
+            [
+                'main_table_foreign_key' => 'product_id',
+                'eav_type' => 'catalog_product',
+                'attr_code' => 'name',
+                'field_alias' => 'product_name'
+            ],
+            [
+                'main_table_foreign_key' => 'product_id_main',
+                'eav_type' => 'catalog_product',
+                'attr_code' => 'sku',
+                'field_alias' => 'main_product_sku'
+            ],
+            [
+                'main_table_foreign_key' => 'product_id',
+                'eav_type' => 'catalog_product',
+                'attr_code' => 'sku',
+                'field_alias' => 'product_sku'
+            ],
+        ];
+        $this->joinEavAttributesToTable($attributes);
     }
 
-    public function joinEAV($collection, $mainTableForeignKey, $eavType, $attrCode, $fieldAlias, $mainTable = 'main_table'){
+    public function joinEavAttributesToTable($attributes)
+    {
+        foreach ($attributes as $attributeData) {
+            $buff = $this->joinEAV(
+                $attributeData['main_table_foreign_key'],
+                $attributeData['eav_type'],
+                $attributeData['attr_code'],
+                $attributeData['field_alias']);
+            $this->addFilterToMap($attributeData['field_alias'], $buff['table'] . '.' . $buff['field']);
+        }
+    }
+
+    public function joinEAV($mainTableForeignKey, $eavType, $attrCode, $fieldAlias, $mainTable = 'main_table')
+    {
         $this->_aliasIndex++;
-        $entityType = $this->eavConfig->getEntityType($eavType);
-//        $entityTypeId = $entityType->getEntityTypeId();
-        $entityTable = $collection->getTable($entityType->getEntityTable());
-        //Use an incremented index to make sure all of the aliases for the eav attribute tables are unique.
-        $attribute = $this->eavConfig->getAttribute($eavType, $attrCode);
-        $attr =  $this->eavAttr->loadByCode($eavType, $attrCode);
+        $entityType = $this->_eavConfig->getEntityType($eavType);
+        $entityTable = $this->getTable($entityType->getEntityTable());
+        $attribute = $this->_eavConfig->getAttribute($eavType, $attrCode);
+        $attr = $this->_eavAttr->loadByCode($eavType, $attrCode);
         $alias = 'table_' . $this->_aliasIndex;
         $field = $attrCode; // This will either be the original attribute code or 'value'
-        if ($attribute->getBackendType() != 'static'){
+        if ($attribute->getBackendType() != 'static') {
             $field = 'value';
-            $table = $entityTable. '_'.$attribute->getBackendType();
-            $collection->getSelect()
+            $table = $entityTable . '_' . $attribute->getBackendType();
+            $this->getSelect()
                 ->joinLeft(array($alias => $table),
-                    $mainTable . '.'.$mainTableForeignKey.' = '.$alias.'.entity_id and '.$alias.'.attribute_id = '. $attr->getId(),
+                    $mainTable . '.' . $mainTableForeignKey . ' = ' . $alias . '.entity_id and ' . $alias . '.attribute_id = ' . $attr->getId(),
                     array($fieldAlias => $alias . "." . $field)
                 );
-        }else{
-            $collection->getSelect()
+        } else {
+            $this->getSelect()
                 ->joinLeft(array($alias => $entityTable),
-                    $mainTable . '.'.$mainTableForeignKey.' = '. $alias.'.entity_id',
+                    $mainTable . '.' . $mainTableForeignKey . ' = ' . $alias . '.entity_id',
                     array($fieldAlias => $alias . "." . $field)
                 );
         }
@@ -62,6 +95,7 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
             "field" => $field
         );
     }
+
     /**
      * Define resource model
      *
@@ -69,7 +103,8 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
      */
     protected function _construct()
     {
-        $this->_init('Magecom\AroundProducts\Model\AroundProducts', 'Magecom\AroundProducts\Model\ResourceModel\AroundProducts');
+        $this->_init('Magecom\AroundProducts\Model\AroundProducts',
+            'Magecom\AroundProducts\Model\ResourceModel\AroundProducts');
     }
 
 }
